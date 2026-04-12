@@ -72,6 +72,7 @@
         "entry": {
           "Name": "Notion Electron",
           "Icon": "notion-electron",
+          "StartupWMClass": "notion-electron",
           "Terminal": "false",
           "Type": "Application",
           "Categories": "Utility;Office;",
