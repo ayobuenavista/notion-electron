@@ -6,8 +6,9 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "start": "APPIMAGE=/ electron .",
-    "make": "electron-packager . notion-electron --platform=linux --arch=x64 --out=dist/ --icon=./notion-electron.png --overwrite && chmod -R 777 ./dist/notion-electron-linux-x64/",
+    "make": "node ./dev/pack-linux.mjs && chmod -R 777 ./dist/notion-electron-linux-x64/",
     "pack": "electron-builder --linux",
+    "check:packaged-sharp": "node ./dev/check-packaged-sharp-linux-x64.mjs",
     "install-desktop-file": "desktop-file-install --dir=$HOME/.local/share/applications ./notion-electron.desktop",
     "dev": "node ./dev/release-server.mjs",
     "flatpak-lint": "./dev/flatpak/lint.sh",
@@ -48,7 +49,7 @@
     "decode-ico": "^0.4.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
-    "sharp": "^0.34.4",
+    "sharp": "^0.34.5",
     "sortablejs": "^1.15.7"
   },
   "dbus": {
