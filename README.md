@@ -67,6 +67,7 @@ Run program with this flags to enable features:
 
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
+- `--enable-linux-system-audio` - experimental Linux-only screen-sharing flag that enables Chromium's PipeWire/PulseAudio-related capture features and Electron's display-media handler in an attempt to make system audio available to Notion. To avoid auto-selecting the wrong monitor, the experiment only auto-grants capture when Electron exposes a single display source, so multi-monitor setups may still require the default behavior instead. This may still not work on every desktop environment, Wayland compositor, or packaging target.
 
 ## Highlights
 
