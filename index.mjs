@@ -4,7 +4,9 @@ import {
 	nativeTheme,
 	BaseWindow,
 	BrowserWindow,
+	desktopCapturer,
 	Menu,
+	session,
 } from "electron";
 import Store from "electron-store";
 import EventEmitter from "node:events";
@@ -21,15 +23,108 @@ import UpdateService from "./services/update.mjs";
 import ChangelogService from "./services/changelog.mjs";
 import NotificationService from "./services/notifications.mjs";
 import { createMonitorBus } from "./lib/dbus.mjs";
+import { selectDisplayMediaSource } from "./lib/linuxSystemAudio.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TITLEBAR_HEIGHT = 40;
 const DARK_THEME_BACKGROUND = "#202020";
 const LIGHT_THEME_BACKGROUND = "#f8f8f7";
+const NOTION_HOST_SUFFIXES = ["notion.so", "notion.com"];
+const ENABLE_LINUX_SYSTEM_AUDIO =
+	process.platform === "linux" &&
+	process.argv.includes("--enable-linux-system-audio");
+const LINUX_SYSTEM_AUDIO_FEATURES = [
+	"PulseaudioLoopbackForCast",
+	"PulseaudioLoopbackForScreenShare",
+	"WebRTCPipeWireCapturer",
+];
 
 let mainWindow = null;
 const store = new Store();
+
+function isAllowedNotionOrigin(urlOrOrigin) {
+	if (!urlOrOrigin) {
+		return false;
+	}
+
+	try {
+		const { protocol, hostname } = new URL(urlOrOrigin);
+		return (
+			protocol === "https:" &&
+			NOTION_HOST_SUFFIXES.some(
+				(suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`),
+			)
+		);
+	} catch {
+		return false;
+	}
+}
+
+function appendFeatureSwitch(features) {
+	const existingFeatures = app.commandLine
+		.getSwitchValue("enable-features")
+		.split(",")
+		.map((feature) => feature.trim())
+		.filter(Boolean);
+	const mergedFeatures = [...new Set([...existingFeatures, ...features])];
+
+	if (mergedFeatures.length > 0) {
+		app.commandLine.appendSwitch(
+			"enable-features",
+			mergedFeatures.join(","),
+		);
+	}
+}
+
+function configureLinuxSystemAudioCapture() {
+	const defaultSession = session.defaultSession;
+
+	if (!defaultSession) {
+		return;
+	}
+
+	defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
+		if (!isAllowedNotionOrigin(request.securityOrigin)) {
+			callback({});
+			return;
+		}
+
+		if (!request.videoRequested && !request.audioRequested) {
+			callback({});
+			return;
+		}
+
+		try {
+			const sources = await desktopCapturer.getSources({
+				types: ["screen"],
+			});
+			const selectedSource = selectDisplayMediaSource(sources);
+
+			if (!selectedSource) {
+				callback({});
+				return;
+			}
+
+			callback({
+				...(request.videoRequested ? { video: selectedSource } : {}),
+				// Electron documents loopback audio as Windows-only. This stays behind
+				// an explicit Linux experiment because Chromium exposes related
+				// PulseAudio/PipeWire features that may enable it on some setups.
+				// To avoid capturing the wrong monitor, this experiment only auto-selects
+				// when Electron exposes a single display source.
+				...(request.audioRequested ? { audio: "loopback" } : {}),
+			});
+		} catch (error) {
+			console.error("Failed to configure Linux system audio capture:", error);
+			callback({});
+		}
+	});
+}
+
+if (ENABLE_LINUX_SYSTEM_AUDIO) {
+	appendFeatureSwitch(LINUX_SYSTEM_AUDIO_FEATURES);
+}
 
 if (
 	process.env.XDG_SESSION_DESKTOP.toLowerCase() === "gnome" &&
@@ -96,6 +191,10 @@ if (!app.requestSingleInstanceLock()) {
 		.finally(() => {
 			Promise.all([themeProxyPromise, app.whenReady()]).then(
 				([dBusColorScheme]) => {
+					if (ENABLE_LINUX_SYSTEM_AUDIO) {
+						configureLinuxSystemAudioCapture();
+					}
+
 					Menu.setApplicationMenu(null);
 					nativeTheme.themeSource = store.get("general-theme", "system");
 					const bgColor =
