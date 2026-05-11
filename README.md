@@ -15,7 +15,7 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 
 ## Installation
 
-<a href="https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-x86_64.AppImage">
+<a href="https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-x86_64.AppImage">
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="./docs/banner-appimage-dark.svg">
 		<source media="(prefers-color-scheme: light)" srcset="./docs/banner-appimage-light.svg">
@@ -24,14 +24,14 @@ Notion Electron is an unofficial desktop application for Notion, built using Ele
 </a>
 
 - **Any Distribution `.AppImage`**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-x86_64.AppImage)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-arm64.AppImage)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-x86_64.AppImage)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-arm64.AppImage)
 - **Ubuntu / Debian `.deb` package**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-amd64.deb)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-arm64.deb)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-amd64.deb)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-arm64.deb)
 - **Fedora / CentOS / OpenSUSE `.rpm` package**
-	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-x86_64.rpm)
-	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v1.9.6/Notion_Electron-1.9.6-aarch64.rpm)
+	- [x64 / amd64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-x86_64.rpm)
+	- [arm64 / aarch64](https://github.com/anechunaev/notion-electron/releases/download/v2.0.0/Notion_Electron-2.0.0-aarch64.rpm)
 
 ### Manual Installation
 
@@ -68,6 +68,35 @@ Run program with this flags to enable features:
 - `--hide-on-startup` – This flag allows the application to start without opening the main window. It is useful when you add the client to your autostart programs list, since it will launch minimized to the tray.
 - `--disable-spellcheck` - disables OS-defined spellcheck.
 - `--enable-linux-system-audio` - experimental Linux-only screen-sharing flag that enables Chromium's PipeWire/PulseAudio-related capture features and Electron's display-media handler in an attempt to make system audio available to Notion. To avoid auto-selecting the wrong monitor, the experiment only auto-grants capture when Electron exposes a single display source, so multi-monitor setups may still require the default behavior instead. This may still not work on every desktop environment, Wayland compositor, or packaging target.
+
+### Spellcheck dictionaries
+
+Sometimes, for a non-system language, spellcheck may appear not to work correctly because the application is shipped with the default English dictionary only.
+
+This behavior can be adjusted by updating Electron preferences at `~/.config/notion-electron/Preferences`. Since Electron cannot reliably download dictionaries in sandboxed environments, you may need to install them manually.
+
+Example of the relevant section in `Preferences`:
+```json
+"spellcheck":{"dictionaries":["es-MX"],"dictionary":"es-MX"}
+```
+
+Dictionary files should be placed in `~/.config/notion-electron/Dictionaries`.
+
+`.bdic` files can be obtained from the [Chromium Hunspell dictionaries repository](https://chromium.googlesource.com/chromium/deps/hunspell_dictionaries/+/refs/heads/main).
+
+Note that:
+* Not all languages/locales are available (e.g. `es-MX` may not be present)
+* File naming includes version suffixes (e.g. `es-ES-3-0.bdic`)
+* You may need to rename the file to match the expected locale (e.g. `es-ES.bdic`)
+
+
+After downloading a dictionary file (e.g. `es-ES-3-0.bdic`), place it in the `Dictionaries` directory and rename it if necessary (e.g. `es-ES.bdic`).
+
+After installing dictionaries, restart Notion Electron:
+```sh
+pkill -f notion-electron
+```
+
 
 ## Highlights
 
